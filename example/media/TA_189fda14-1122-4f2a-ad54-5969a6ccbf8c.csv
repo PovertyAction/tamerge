@@ -1,0 +1,6 @@
+Field name,Total duration (seconds),First appeared (seconds into survey)
+intronote,2,8
+consent,3,10
+consented[1]/name,4,13
+consented[1]/age,12,17
+consented[1]/confirmnote,2,28
