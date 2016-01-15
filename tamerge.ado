@@ -46,7 +46,11 @@ forvalues j = 1/`audit_count' {
 	qui tempfile audit`j' 
 	
 	// This file location will be wherever your audits are stored
-	qui insheet using "`media_location'\\`aud'", clear
+	cap qui insheet using "`media_location'\\`aud'", clear
+	if _rc==601 {
+		di "Audit `aud' not found, skipping this audit"
+		exit
+	}
 	
 	/* Here, I am stripping the group name, which is perhaps the most annoying part, since different cells
 	have different numbers of groups. 
@@ -106,10 +110,15 @@ dataset; it will require merging 1:1 on your audit identifier variable, and rena
 in your audit dataset. 
 */
 
-qui use `audit1', clear
+cap qui use `audit1', clear
+if _rc==601 {
+	clear
+}
 
 forvalues j = 2/`audit_count' {
-	qui append using `audit`j'', force
+	/* This cap again is for instances where the media file cannot be found (eg when SurveyCTO
+	Sync fails to download all of the files */
+	cap qui append using `audit`j'', force
 }
 
 cap drop _var*
