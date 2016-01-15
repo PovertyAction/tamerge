@@ -1,0 +1,22 @@
+type,name,label,hint,default,appearance,constraint,constraint message,relevance,disabled,required,required message,read only,calculation,repeat_count,media:image,media:audio,media:video,note,response_note,publishable,minimum_seconds
+start,starttime,,,,,,,,,,,,,,,,,,,,
+end,endtime,,,,,,,,,,,,,,,,,,,,
+deviceid,deviceid,,,,,,,,,,,,,,,,,,,,
+subscriberid,subscriberid,,,,,,,,,,,,,,,,,,,,
+simserial,simid,,,,,,,,,,,,,,,,,,,,
+phonenumber,devicephonenum,,,,,,,,,,,,,,,,,,,,
+text audit,text_audit,,,,p=100,,,,,,,,,,,,,,,,
+audio audit,audio_audit,,,,p=100; s=0; d=36000,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,
+note,intronote,"Welcome to the sample auditing form. Please swipe forward to continue.
+
+NOTE: You are being recorded.",,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,
+select_one yesno,consent,Would you like to continue?,,,,,,,,yes,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,
+begin group,consented,Sample survey module,,,organized,,,${consent}=1,,,,,,,,,,,,,
+text,name,What is your name?,,,,,,,,yes,,,,,,,,,,,
+integer,age,How old are you?,,,,.>3 and .<130,Please enter a valid age to continue.,,,yes,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,
+note,confirmnote,Your name is ${name} and your age is ${age}. Thank you.,,,,,,,,,,,,,,,,,,,
+end group,consented,,,,,,,,,,,,,,,,,,,,
