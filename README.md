@@ -3,11 +3,13 @@ A Stata command for merging SurveyCTO text audit data with imported Stata data s
 
 ## To Do 
 - Add SMCL help file documentation.
+~~- Add checks to verify text audit variable.~~
+- Add checks to verify media location option.
 - Optimize performance of the merge.
-- Add license information.
+~~- Add license information.~~
 - Adjust progress display items (if needed).
 - Create unit test examples.
-- Overal make code more consistent with odkmeta, perhaps for eventual merger.
+- Overall make code more consistent with odkmeta, perhaps for eventual merger.
 - Add stats option for quick overview of enumerator performance.
 
 ## Help File
