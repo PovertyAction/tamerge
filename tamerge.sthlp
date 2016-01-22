@@ -24,6 +24,8 @@
 contains the text audit data
 
 {syntab:Options}
+{synopt:{opt prefix(stub)}}replace default {it: ta} prefix with {it: stub}.{p_end}
+{synopt:{opt save(dtaname)}}write merged data set to a local dta file named {it: dtaname}.{p_end}
 {synopt:{opt replace}}overwrite existing {it:{help filename}}{p_end}
 {synoptline}
 {p2colreset}{...}
