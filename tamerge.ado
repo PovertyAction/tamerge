@@ -16,19 +16,7 @@ program define tamerge, rclass
 
 	version 13
 
-	// check sxpose is installed (required)
-	cap which sxpose
-	if _rc {
-		di "SSC package sxpose required."
-		di "  Attempting to install sxpose..."
-		ssc install sxpose
-		if _rc == 631 {
-			di as err "You are not connected to the internet"
-			di as err "Please connect to the internet, then run tamerge or type {cmd:ssc install sxpose}"
-		}
-	}
-
-	syntax varname, media(str) [stats enum(str) prefix(str) replace]
+	syntax varname, media(str) [stats groupnames enum(str) prefix(str) replace]
 
 	/* the syntax variables represent the following:
 	     varname - the name of the text_audit variable in the dataset in memory.
@@ -75,12 +63,17 @@ program define tamerge, rclass
 		
 		First, I split the variable every time there is a "/" (so for example,
 		there would be a total of 6 variables if the varname is prefaced by 5 group names). First, I split the
-		variable, and determine how many variables I have created through this split. */
+		variable, and determine how many variables I have created through this split.
 		
 		qui replace fieldname = subinstr(fieldname, "[", "", .)
-		qui replace fieldname = subinstr(fieldname, "]", "", .)
-		qui split fieldname, p(/)
-		qui drop fieldname
+		qui replace fieldname = subinstr(fieldname, "]", "", .) 
+		*/
+		replace fieldname = reverse(fieldname)
+		qui split fieldname, p(/) limit(1)
+		gen shortname = reverse(fieldname1)
+		qui keep shortname totaldurationseconds
+		
+		/*
 		qui unab fieldvars: fieldname*
 		qui loc fieldcount: word count `fieldvars'
 		
@@ -107,12 +100,20 @@ program define tamerge, rclass
 		However, by using sxpose, the variable fieldname now becomes the varname in Stata, and the value in
 		column 2 becomes the accompanying value. This now represents one observation in the dataset rather
 		than several. */
-		
-		qui sxpose, clear force firstnames
-		
-		foreach var of varlist _all {
-			qui destring `var', replace
-		} 
+		*/
+		local nobs = _N 
+
+		forvalues i = 1/`nobs' {
+			local lbl`i' = shortname[`i']
+		}
+
+		drop shortname
+		xpose, clear
+
+		forvalues i = 1/`nobs' {
+			rename v`i' `lbl`i''
+		}
+
 		qui gen `tavar' = "`tafile'"
 		qui order `tavar', first
 		
