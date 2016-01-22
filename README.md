@@ -5,10 +5,10 @@ A Stata command for merging SurveyCTO text audit data with imported Stata data s
 - Add SMCL help file documentation.
 - ~~Add checks to verify text audit variable.~~
 - ~~Add checks to verify media location option.~~
-- ~~ Add `prefix' option.~~
-- ~~ Add `save' option.~~
+- ~~ Add `prefix` option.~~
+- ~~ Add `save` option.~~
 - Add `groupnames` option for data sets that maintain SCTO group names.
-- Add `stats' option for quick overview of enumerator performance.
+- Add `stats` option for quick overview of enumerator performance.
 - Optimize performance of the merge.
 - ~~Add license information.~~
 - Adjust progress display items (if needed).
