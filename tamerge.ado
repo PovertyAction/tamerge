@@ -14,10 +14,10 @@
 cap program drop tamerge parse_tavar parse_media
 
 program define tamerge, rclass
-
 	version 13
 
-	syntax varname, media(str) [stats groupnames enum(str) prefix(str) replace]
+	syntax varname, media(str) [prefix(str) save(str) stats(str)] ///
+	                           [groupnames replace]
 
 	/* the syntax variables represent the following:
 	     varname - the name of the text_audit variable in the dataset in memory.
@@ -38,7 +38,8 @@ program define tamerge, rclass
 
 	// set cleaned locals
 	local path `r(location)'
-	local pre cond("`prefix'" == "", "ta_", "`prefix'_")
+	local filename = "`save'"
+	local pre = cond("`prefix'" == "", "ta_", "`prefix'_")
 
 	// create temporary files
 	tempfile full_data audit_data
@@ -67,7 +68,7 @@ program define tamerge, rclass
 		there would be a total of 6 variables if the varname is prefaced by 5 group names). First, I split the
 		variable, and determine how many variables I have created through this split. */
 
-		replace fieldname = reverse(fieldname)
+		qui replace fieldname = reverse(fieldname)
 		qui split fieldname, p(/) limit(1)
 		gen shortname = reverse(fieldname1)
 		qui keep shortname totaldurationseconds
@@ -84,7 +85,7 @@ program define tamerge, rclass
 			local lbl`i' = shortname[`i']
 		}
 
-		drop shortname
+		qui drop shortname
 		xpose, clear
 
 		forvalues i = 1/`nobs' {
@@ -128,6 +129,10 @@ program define tamerge, rclass
 	use `full_data', clear
 	qui merge 1:1 `tavar' using `audit_data'
 	qui drop _merge
+	
+	if "`filename'" != "" {
+		save "`filename'", replace
+	}
 end
 
 // program to check that specified variable is a SurveyCTO text audit field
