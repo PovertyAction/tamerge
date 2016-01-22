@@ -11,22 +11,24 @@
 	memory.
 */
 
-cap program drop tamerge;
+cap program drop tamerge
 program define tamerge, rclass
+
 	version 13
 
 	// check sxpose is installed (required)
-	cap which sxpose()
+	cap which sxpose
 	if _rc {
-		ssc install sxpose
 		di "SSC package sxpose required."
 		di "  Attempting to install sxpose..."
+		ssc install sxpose
 		if _rc == 631 {
 			di as err "You are not connected to the internet"
 			di as err "Please connect to the internet, then run tamerge or type {cmd:ssc install sxpose}"
+		}
 	}
 
-	syntax varname, media(str) [stats(enum) prefix(str) replace]
+	syntax varname, media(str) [stats enum(str) prefix(str) replace]
 
 	/* the syntax variables represent the following:
 	     varname - the name of the text_audit variable in the dataset in memory.
@@ -37,24 +39,21 @@ program define tamerge, rclass
 	*/
 
 	// ***program checks***
+	local tavar `varlist'
 
 	// check ta variable 
-	parse_tavar `varname'
-
+	parse_tavar `tavar'
+	
 	// check if media folder exists
 	parse_media `media'
 
-	// check enum variable
-	parse_enum `enum'
-
 	// set cleaned locals
-	local media = `r(location)'
-	local tavar = `varname'
+	local path `r(location)'
 
 	// create temporary files
 	tempfile full_data audit_data
-	save `full_data'
-
+	qui save `full_data'
+		
 	// transpose
 	qui levelsof `tavar', loc(talevels)
 	loc tacount: word count `talevels'
@@ -65,9 +64,9 @@ program define tamerge, rclass
 		qui tempfile audit`j' 
 		
 		// This file location will be wherever your audits are stored
-		cap qui insheet using "`media'\\`tafile", clear
+		cap qui insheet using "`path'/`tafile'", clear
 		if _rc == 601 {
-			di "Audit `tafile' not found, skipping this audit"
+			di "Audit `path'/`tafile' not found, skipping this audit"
 			exit
 		}
 		
@@ -146,16 +145,19 @@ program define tamerge, rclass
 		rename `var' ta_`var'
 	}
 
-	save `audit_data'
+	qui save `audit_data'
 
 	use `full_data', clear
-	merge 1:1 `tavar' using `audit_data'
+	qui merge 1:1 `tavar' using `audit_data'
+	qui drop _merge
 end
 
+cap program drop parse_tavar
 // program to check that specified variable is a SurveyCTO text audit field
 program parse_tavar, sclass
-	if `:list sizeof 0' != 1 {
-		di as err "`0' is not a variable in data set."
+	cap confirm str var `0'
+	if _rc {
+		di as err "`0' is not a string variable."
 		ex 198
 	}
 
@@ -170,12 +172,146 @@ program parse_tavar, sclass
 		}
 	}
 end
-
+cap program drop parse_media
 // program to check that media folder exists in the specified location
 program parse_media, rclass
 
+	// normalize file path and reverse string
+	local rpath = reverse(subinstr("`0'", "\", "/", .))
+
+	// grab last directory in path
+	gettoken rfolder rpath : rpath, parse("/")
+
+	local folder = reverse("`rfolder'")
+	local path = reverse("`path'")
+
+	// if it's the media folder
+	if "`folder'" != "media" {
+		// confirm the media folder exists
+		qui cap confirm file "`0'/media/nul"
+		// if no folder
+		if _rc {
+			// throw error
+			di as err "media folder not found in specified location."
+			ex 190
+		}
+		// reset path to original
+		local path = "`0'"
+	}
+
+	return local location "`path'"
+end
+/*
+// program to summarize text audit data
+program summarize_ta, rclass
+	foreach var of varlist ta_* {
+		qui summ `var', det
+		loc mean = r(mean)
+		loc sd = r(sd)
+		qui ttest `var' `enum'
+		loc tval = 
+		loc pval = 
+		postfile
+	}
 end
 
-program parse_enum
 
+// program to summarize text audit data by enumerator
+program summarize_ta_by_enum, rclass
+	* 1. Individual questions, by surveyor (much longer or much shorter)
+	qui levelsof `id_surveyor', loc(surveyor_levels)
+	foreach var of varlist ta_* {
+		qui summ `var', det
+		if r(N)!=0 {
+			loc med = r(p50)
+			loc sd = r(sd)
+			loc mean = r(mean)
+			foreach i in `surveyor_levels' {
+				qui summ `var' if `id_surveyor'==`i', det
+				loc med_`i' = r(p50)
+				loc sd_`i' = r(sd)
+				loc mean_`i' = r(mean)
+				if `mean_`i'' > (`mean' + 2*`sd') {
+					display "Surveyor `i' spends much longer on question `var' than average"
+				}
+				else if `mean_`i'' < (`mean'+2*`sd') {
+					display "Surveyor `i' spends much less time on question `var' than average"
+				}
+			}
+		}
+	}
+
+	* 2. Looking at average section length by surveyor
+	// Creating each section to look at individually
+	* Health, under-5 card
+	foreach var of varlist ta_c_* {
+		loc 1 `1' `var'
+	}
+	display "`1'"
+	* Groups, health information, cda visits
+	foreach var of varlist ta_b_* {
+		loc 2 `2' `var'
+	}
+	display "`2'"
+	* Anthropometric measures
+	foreach var of varlist ta_anthro_* {
+		loc 3 `3' `var'
+	}
+	display "`3'"
+	* Nutrition and food recall
+	foreach var of varlist ta_n?_* ta_n??_* {
+		loc 4 `4' `var'
+	}
+	display "`4'"
+	* Activities and games (including inter-NDA)
+	foreach var of varlist ta_d_* {
+		loc 5 `5' `var'
+	}
+	display "`5'"
+	* Developmental/disability
+	foreach var of varlist ta_f_* {
+		loc 6 `6' `var'
+	}
+	display "`6'"
+	* Maternal recall
+	foreach var of varlist ta_g_* {
+		loc 7 `7' `var'
+	}
+	display "`7'"
+	* Surveyor observations
+	foreach var of varlist ta_h_* {
+		loc 8 `8' `var'
+	}
+	display "`8'"
+	* Mental health
+	foreach var of varlist ta_e_* {
+		loc 9 `9' `var'
+	}
+	display "`9'"
+
+	// Getting total time per section
+	forvalues i=1/9 {
+		egen section`i'_time = rowtotal(``i''), m
+	}
+	// Getting average section times by surveyor, comparing to overall mean
+	qui levelsof `id_surveyor', loc(surveyor_levels)
+	forvalues i=1/9 {
+		qui summ section`i'_time, det
+		loc mean = r(mean)
+		loc sd = r(sd)
+		loc med = r(p50)
+		foreach j in `surveyor_levels' {
+			qui summ section`i'_time if `id_surveyor'==`j', det
+			loc mean_`j' = r(mean)
+			loc sd_`j' = r(sd)
+			loc med_`j' = r(p50)
+			if `mean_`j'' > (`mean'+2*`sd') {
+				display "Surveyor `j' has much longer time in section `i' than average"
+			}
+			else if `mean_`j'' < (`mean'-2*`sd') {
+				display "Surveyor `j' has much shorter time in section `i' than average"
+			}
+		}
+	}
 end
+*/
