@@ -64,7 +64,7 @@ program define tamerge, rclass
 		qui tempfile audit`j' 
 		
 		// This file location will be wherever your audits are stored
-		cap qui insheet using "`path'/`tafile'", clear
+		cap qui import delimited using "`path'/`tafile'", clear
 		if _rc == 601 {
 			di "Audit `path'/`tafile' not found, skipping this audit"
 			exit
