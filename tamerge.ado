@@ -11,7 +11,8 @@
 	memory.
 */
 
-cap program drop tamerge
+cap program drop tamerge parse_tavar parse_media
+
 program define tamerge, rclass
 
 	version 13
@@ -37,6 +38,7 @@ program define tamerge, rclass
 
 	// set cleaned locals
 	local path `r(location)'
+	local pre cond("`prefix'" == "", "ta_", "`prefix'_")
 
 	// create temporary files
 	tempfile full_data audit_data
@@ -63,44 +65,19 @@ program define tamerge, rclass
 		
 		First, I split the variable every time there is a "/" (so for example,
 		there would be a total of 6 variables if the varname is prefaced by 5 group names). First, I split the
-		variable, and determine how many variables I have created through this split.
-		
-		qui replace fieldname = subinstr(fieldname, "[", "", .)
-		qui replace fieldname = subinstr(fieldname, "]", "", .) 
-		*/
+		variable, and determine how many variables I have created through this split. */
+
 		replace fieldname = reverse(fieldname)
 		qui split fieldname, p(/) limit(1)
 		gen shortname = reverse(fieldname1)
 		qui keep shortname totaldurationseconds
-		
-		/*
-		qui unab fieldvars: fieldname*
-		qui loc fieldcount: word count `fieldvars'
-		
-		/* Now, I make a variable called field name, which will have the value of interest, the variable name. 
-		In every instance, the "last" value in my split will be the variable name. For example, if for a 
-		particular variable, there are six fieldnames, fieldname1 - fieldname5 will be the group names, and
-		fieldname6 the variable name. 
-
-		I therefore start at the max (`fieldcount') and assign fieldname thevalue associated with
-		fieldname`i' if there is a nonmissing value there. I then work backwards until
-		1, only filling in the values when the value is nonmissing. */
-
-		qui gen fieldname = ""
-		
-		foreach i of numlist `fieldcount'(-1)1 {
-			qui replace fieldname = fieldname`i' if mi(fieldname)
-		}
-		
-		qui cap drop fieldname??
-		qui drop fieldname? firstappearedsecondsintosurvey
-		qui order fieldname, first
 		
 		/* Here, I change formats. Previously, column 1 is the varname, and column 2 is the associated value.
 		However, by using sxpose, the variable fieldname now becomes the varname in Stata, and the value in
 		column 2 becomes the accompanying value. This now represents one observation in the dataset rather
 		than several. */
 		*/
+
 		local nobs = _N 
 
 		forvalues i = 1/`nobs' {
@@ -143,7 +120,7 @@ program define tamerge, rclass
 	cap drop _var*
 	qui ds `tavar', not
 	foreach var of varlist `r(varlist)' {
-		rename `var' ta_`var'
+		rename `var' `pre'`var'
 	}
 
 	qui save `audit_data'
@@ -153,7 +130,6 @@ program define tamerge, rclass
 	qui drop _merge
 end
 
-cap program drop parse_tavar
 // program to check that specified variable is a SurveyCTO text audit field
 program parse_tavar, sclass
 	cap confirm str var `0'
@@ -173,7 +149,7 @@ program parse_tavar, sclass
 		}
 	}
 end
-cap program drop parse_media
+
 // program to check that media folder exists in the specified location
 program parse_media, rclass
 
@@ -202,10 +178,11 @@ program parse_media, rclass
 
 	return local location "`path'"
 end
+
 /*
 // program to summarize text audit data
 program summarize_ta, rclass
-	foreach var of varlist ta_* {
+	foreach var of varlist `pre'* {
 		qui summ `var', det
 		loc mean = r(mean)
 		loc sd = r(sd)
@@ -221,7 +198,7 @@ end
 program summarize_ta_by_enum, rclass
 	* 1. Individual questions, by surveyor (much longer or much shorter)
 	qui levelsof `id_surveyor', loc(surveyor_levels)
-	foreach var of varlist ta_* {
+	foreach var of varlist `pre'* {
 		qui summ `var', det
 		if r(N)!=0 {
 			loc med = r(p50)
