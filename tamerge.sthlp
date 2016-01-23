@@ -53,14 +53,21 @@ Blah, blah, blah....
 {dlgtab:Main}
 
 {phang}
-{cmd:media(}{it:medialocation}{cmd:)} blah, blah, blah
+{cmd:media(}{it:medialocation}{cmd:)} blah, blah, blah.
+
 {dlgtab:Options}
 
 {phang}
-{cmd:prefix(}{it:stub}{cmd:)} blah, blah, blah
-{cmd:save(}{it:dtaname}{cmd:)} blah, blah, blah
-{cmd:stats(}{it:enumerator}{cmd:)} blah, blah, blah
-{cmd:replace} blah, blah, blah
+{cmd:prefix(}{it:stub}{cmd:)} blah, blah, blah.
+
+{phang}
+{cmd:save(}{it:dtaname}{cmd:)} blah, blah, blah.
+
+{phang}
+{cmd:stats(}{it:enumerator}{cmd:)} blah, blah, blah.
+
+{phang}
+{cmd:replace} blah, blah, blah.
 
 {marker examples}{...}
 {title:Examples}

@@ -62,10 +62,18 @@ A Stata command for merging SurveyCTO text audit data with imported Stata data s
         +------+
     ----+ Main +-------------------------------------------------------------
 <p>
-    <b>media(</b><i>medialocation</i><b>)</b> blah, blah, blah :Options
+    <b>media(</b><i>medialocation</i><b>)</b> blah, blah, blah.
 <p>
-    <b>prefix(</b><i>stub</i><b>)</b> blah, blah, blah <b>save(</b><i>dtaname</i><b>)</b> blah, blah, blah
-        <b>stats(</b><i>enumerator</i><b>)</b> blah, blah, blah <b>replace</b> blah, blah, blah
+        +---------+
+    ----+ Options +----------------------------------------------------------
+<p>
+    <b>prefix(</b><i>stub</i><b>)</b> blah, blah, blah.
+<p>
+    <b>save(</b><i>dtaname</i><b>)</b> blah, blah, blah.
+<p>
+    <b>stats(</b><i>enumerator</i><b>)</b> blah, blah, blah.
+<p>
+    <b>replace</b> blah, blah, blah.
 <p>
 <a name="examples"></a><b><u>Examples</u></b>
 <p>
