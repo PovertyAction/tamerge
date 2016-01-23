@@ -133,6 +133,36 @@ program define tamerge, rclass
 	if "`filename'" != "" {
 		save "`filename'", replace
 	}
+
+	if "`stats'" != "" {
+	tempname mem
+	tempfile temp
+	postfile `mem' str32 variable mean sd pvalue using `temp'
+	foreach variable of varlist `pre'* {
+		qui summ `variable', det
+		loc mean = r(mean)
+		loc sd = r(sd)
+		qui anova `variable' `stats'
+		loc pvalue = Ftail(e(df_m), e(df_r), e(F))
+		post `mem' ("`variable'") (`mean') (`sd') (`pvalue')
+		}
+	postclose `mem'
+	preserve
+	use `temp', replace
+	format mean %9.3f
+	format sd %9.3f
+	format pval %9.4f
+	label var variable "Variable"
+	label var mean "Mean (s)"
+	label var sd "SD (s)"
+	label var pvalue "P-Value (F-test by enum)"
+	di ""
+	di "Audit variable summary statistics."
+	li variable mean sd pvalue, noobs
+	di "*Note: P-value is from F-test of equal means across enumerators."
+	restore
+	}
+
 end
 
 // program to check that specified variable is a SurveyCTO text audit field
@@ -184,20 +214,8 @@ program parse_media, rclass
 	return local location "`path'"
 end
 
-/*
-// program to summarize text audit data
-program summarize_ta, rclass
-	foreach var of varlist `pre'* {
-		qui summ `var', det
-		loc mean = r(mean)
-		loc sd = r(sd)
-		qui ttest `var' `enum'
-		loc tval = 
-		loc pval = 
-		postfile
-	}
-end
 
+/*
 
 // program to summarize text audit data by enumerator
 program summarize_ta_by_enum, rclass
