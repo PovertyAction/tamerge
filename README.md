@@ -8,7 +8,7 @@ A Stata command for merging SurveyCTO text audit data with imported Stata data s
 - ~~Add `prefix` option.~~
 - ~~Add `save` option.~~
 - Add `groupnames` option for data sets that maintain SCTO group names.
-- Add `stats` option for quick overview of enumerator performance.
+- ~~Add `stats` option for quick overview of enumerator performance.~~
 - Optimize performance of the merge.
 - ~~Add license information.~~
 - Adjust progress display items (if needed).
@@ -39,6 +39,9 @@ A Stata command for merging SurveyCTO text audit data with imported Stata data s
                                             <i>stub</i>.
       <b>save(</b><i>dtaname</i><b>)</b>                       write merged data set to a local
                                             dta file named<i> dtaname</i>.
+      <b>stats(</b><i>enumerator</i><b>)</b>                   display summary statistics for
+                                            audit variables and test for
+                                            differences across<i> enumerator</i>.
       <b>replace</b>                             overwrite existing <i>filename</i>
     -------------------------------------------------------------------------
     * <b>media()</b> is required.
@@ -59,7 +62,10 @@ A Stata command for merging SurveyCTO text audit data with imported Stata data s
         +------+
     ----+ Main +-------------------------------------------------------------
 <p>
-    <b>media(</b><i>medialocation</i><b>)</b> blah, blah, blah
+    <b>media(</b><i>medialocation</i><b>)</b> blah, blah, blah :Options
+<p>
+    <b>prefix(</b><i>stub</i><b>)</b> blah, blah, blah <b>save(</b><i>dtaname</i><b>)</b> blah, blah, blah
+        <b>stats(</b><i>enumerator</i><b>)</b> blah, blah, blah <b>replace</b> blah, blah, blah
 <p>
 <a name="examples"></a><b><u>Examples</u></b>
 <p>

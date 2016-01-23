@@ -26,6 +26,7 @@ contains the text audit data
 {syntab:Options}
 {synopt:{opt prefix(stub)}}replace default {it: ta} prefix with {it: stub}.{p_end}
 {synopt:{opt save(dtaname)}}write merged data set to a local dta file named {it: dtaname}.{p_end}
+{synopt:{opt stats(enumerator)}}display summary statistics for audit variables and test for differences across {it: enumerator}.{p_end}
 {synopt:{opt replace}}overwrite existing {it:{help filename}}{p_end}
 {synoptline}
 {p2colreset}{...}
@@ -53,6 +54,13 @@ Blah, blah, blah....
 
 {phang}
 {cmd:media(}{it:medialocation}{cmd:)} blah, blah, blah
+{dlgtab:Options}
+
+{phang}
+{cmd:prefix(}{it:stub}{cmd:)} blah, blah, blah
+{cmd:save(}{it:dtaname}{cmd:)} blah, blah, blah
+{cmd:stats(}{it:enumerator}{cmd:)} blah, blah, blah
+{cmd:replace} blah, blah, blah
 
 {marker examples}{...}
 {title:Examples}
