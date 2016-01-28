@@ -151,7 +151,7 @@ program define tamerge, rclass
 	use `temp', replace
 	format mean %9.3f
 	format sd %9.3f
-	format pval %9.4f
+	format pvalue %9.4f
 	label var variable "Variable"
 	label var mean "Mean (s)"
 	label var sd "SD (s)"
