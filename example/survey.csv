@@ -12,6 +12,7 @@ note,intronote,"Welcome to the sample auditing form. Please swipe forward to con
 
 NOTE: You are being recorded.",,,,,,,,,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,
+select_one surveyor,surveyor,SURVEYOR: Please select your name from the list below.,,,,,,,,yes,,,,,,,,,,,
 select_one yesno,consent,Would you like to continue?,,,,,,,,yes,,,,,,,,,,,
 ,,,,,,,,,,,,,,,,,,,,,
 begin group,consented,Sample survey module,,,organized,,,${consent}=1,,,,,,,,,,,,,
