@@ -46,12 +46,14 @@ program define tamerge, rclass
 	qui save `full_data'
 		
 	// transpose
-	qui levelsof `tavar', loc(talevels)
-	loc tacount: word count `talevels'
+	qui count
+	loc tacount `r(n)'
+	
 
 	// This loop will run through every reported instance of a file containing the audit data
 	forvalues j = 1/`tacount' {
-		qui loc tafile: word `j' of `talevels'
+	
+		qui loc tafile = `tavar'[`j']
 		qui tempfile audit`j' 
 		
 		// This file location will be wherever your audits are stored
