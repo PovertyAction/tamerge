@@ -24,8 +24,7 @@ program define tamerge, rclass
 	     media - the name of the folder path where the text audit files are stored. 
 	     stats - print summary stats by enumerator.
 	     prefix - change the stub that is appended to the start of the variable audit times.
-	     replace - replace the 
-	*/
+	     replace - replace the  */
 
 	// ***program checks***
 	local tavar `varlist'
@@ -42,21 +41,22 @@ program define tamerge, rclass
 	local pre = cond("`prefix'" == "", "ta_", "`prefix'_")
 
 	// create temporary files
-	tempfile full_data audit_data
+	tempfile full_data nonmissing_data audit_data
 	qui save `full_data'
-		
+
 	// transpose
-	qui levelsof `tavar', loc(talevels)
-	loc tacount: word count `talevels'
+	qui drop if "`tavar'" == ""
+	loc tacount = _N
+	qui save `nonmissing_data'
 
 	// This loop will run through every reported instance of a file containing the audit data
 	forvalues j = 1/`tacount' {
-		qui loc tafile: word `j' of `talevels'
+		loc tafile = `tavar'[`j']		
 		qui tempfile audit`j' 
 		
 		// This file location will be wherever your audits are stored
 		cap qui import delimited using "`path'/`tafile'", clear
-		if _rc == 601 {
+		if _rc {
 			di "Audit `path'/`tafile' not found, skipping this audit"
 			exit
 		}
@@ -126,10 +126,16 @@ program define tamerge, rclass
 
 	qui save `audit_data'
 
-	use `full_data', clear
+	use `nonmissing_data', clear
 	qui merge 1:1 `tavar' using `audit_data'
 	qui drop _merge
+	qui save `nonmissing_data'
 	
+	use `full_data', clear
+	qui drop if "`tavar'" != ""
+	qui append using `nonmissing_data'
+	qui drop _merge
+
 	if "`filename'" != "" {
 		save "`filename'", replace
 	}
@@ -174,13 +180,10 @@ program parse_tavar, sclass
 	}
 
 	if "`:char `0'[Odk_type]'" != "text audit" {
-		split `0', p("_") gen(stub)
-		qui levelsof stub1, loc(stub1)
-		foreach level of stub {
-			if `stub' != "media/TA" & `stub' != . {
-				di as err "`0' is not a SurveyCTO text audit variable."
-				ex 190
-			}
+		qui count if regexm(`0', "media[\/]TA_") 
+		if `r(N)' < 1 {
+			di as err "`0' is not a SurveyCTO text audit variable."
+			ex 190
 		}
 	}
 end
@@ -201,6 +204,7 @@ program parse_media, rclass
 	if "`folder'" != "media" {
 		// confirm the media folder exists
 		qui cap confirm file "`0'/media/nul"
+
 		// if no folder
 		if _rc {
 			// throw error
@@ -314,5 +318,37 @@ program summarize_ta_by_enum, rclass
 			}
 		}
 	}
+end
+
+mata
+real vector intlevelsof(real vector A)
+{
+/*
+- A must only contain integers.
+- The idea here is that if A = (4,5,5,3,3,1)', then b is created such that
+1s are placed in indices corresponding to the values of A. Ie:
+b = (1,0,1,1,1)'. The levels are then returned with selectindex(b).
+- offset is used to support negative values in A and to more efficiently
+​store the b vector if the minimum value in A is much greater than 1.
+*/
+
+real scalar maxA, minA, rangeA, offset
+real vector minmaxA, b
+
+minmaxA = minmax(A)
+minA = minmaxA[1,1]
+maxA = minmaxA[1,2]
+rangeA = maxA-minA+1
+offset = -minA+1
+
+if (rangeA > 10^9) _error(9,"range of vector must be less than 1 billion")
+// 10^9 is 8GB
+
+b = J(rangeA, 1, 0)
+b[A:+offset,1] = J(length(A),1,1)
+
+return(selectindex(b):-offset)
+
+}
 end
 */
