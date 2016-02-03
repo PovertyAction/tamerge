@@ -3,7 +3,7 @@
  |authors: nate barker                    |
  |         christopher boyer              |
  |         innovations for poverty action |
- |version: v1.0.0						  |
+ |version: v1.0.0                         |
  |date:    2016-01-14                     |
  *----------------------------------------*
   description:
@@ -69,8 +69,21 @@ program define tamerge, rclass
 		variable, and determine how many variables I have created through this split. */
 
 		qui replace fieldname = reverse(fieldname)
-		qui split fieldname, p(/) limit(1)
+		qui split fieldname, p(/)
 		gen shortname = reverse(fieldname1)
+		qui drop fieldname1
+
+		duplicates tag shortname, g(dups)
+		foreach var of varlist fieldname*{
+			replace `var' = subinstr(`var', "]", "", .)
+			replace `var' = regexs(1) if regexm(`var', "[0-9]+") & dups
+			egen maxgrp = max(`var'), by(shortname)
+			replace `var' = . if maxgrp < 2
+			drop maxgrp
+			replace shortname = shortname + "_" + `var' if !missing(`var')
+		}
+
+
 		qui keep shortname totaldurationseconds
 		
 		/* Here, I change formats. Previously, column 1 is the varname, and column 2 is the associated value.
