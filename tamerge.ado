@@ -25,7 +25,8 @@ program define tamerge, rclass
 	     stats - print summary stats by enumerator.
 	     prefix - change the stub that is appended to the start of the variable audit times.
 	     replace - replace the  */
-
+	di ""
+	qui {
 	// ***program checks***
 	local tavar `varlist'
 
@@ -42,17 +43,25 @@ program define tamerge, rclass
 
 	// create temporary files
 	tempfile full_data nonmissing_data audit_data
-	qui save `full_data'
+	save `full_data', replace
 
 	// transpose
-	qui drop if "`tavar'" == ""
+    drop if missing(`tavar')
 	loc tacount = _N
-	qui save `nonmissing_data'
-
+	save `nonmissing_data', replace
+	
+	// set up progress display
+	nois _dots 0, title(Extracting audit times from csvs...) reps(`tacount')
+	nois di ""
+	
 	// This loop will run through every reported instance of a file containing the audit data
 	forvalues j = 1/`tacount' {
+		use `nonmissing_data', clear
 		loc tafile = `tavar'[`j']		
-		qui tempfile audit`j' 
+		tempfile audit`j' 
+		
+		// alert the user
+		nois _dots `j' 0
 		
 		// This file location will be wherever your audits are stored
 		cap qui import delimited using "`path'/`tafile'", clear
@@ -68,29 +77,33 @@ program define tamerge, rclass
 		there would be a total of 6 variables if the varname is prefaced by 5 group names). First, I split the
 		variable, and determine how many variables I have created through this split. */
 
-		qui replace fieldname = reverse(fieldname)
-		qui split fieldname, p(/)
+	    replace fieldname = reverse(fieldname)
+		split fieldname, p(/)
 		gen shortname = reverse(fieldname1)
-		qui drop fieldname1
+		drop fieldname1 fieldname
 
 		duplicates tag shortname, g(dups)
-		foreach var of varlist fieldname*{
-			replace `var' = subinstr(`var', "]", "", .)
-			replace `var' = regexs(1) if regexm(`var', "[0-9]+") & dups
-			egen maxgrp = max(`var'), by(shortname)
-			replace `var' = . if maxgrp < 2
-			drop maxgrp
-			replace shortname = shortname + "_" + `var' if !missing(`var')
+		cap assert dups == 0
+		if _rc {
+			foreach var of varlist fieldname*{
+				g level = regexs(1) if regexm(`var', "\]([0-9]+)\[") & dups
+				destring level, replace
+				egen maxgrp = max(level), by(shortname)
+				replace level = . if maxgrp < 2
+				replace shortname = shortname + "_" + string(level) if !missing(level)
+				drop maxgrp level
+			}
 		}
 
-
-		qui keep shortname totaldurationseconds
+		keep shortname totaldurationseconds
 		
 		/* Here, I change formats. Previously, column 1 is the varname, and column 2 is the associated value.
 		However, by using sxpose, the variable fieldname now becomes the varname in Stata, and the value in
 		column 2 becomes the accompanying value. This now represents one observation in the dataset rather
 		than several. */
 		*/
+		
+		replace shortname = trim(subinstr(shortname, "-", "_", .))
 
 		local nobs = _N 
 
@@ -98,17 +111,17 @@ program define tamerge, rclass
 			local lbl`i' = shortname[`i']
 		}
 
-		qui drop shortname
+		drop shortname
 		xpose, clear
 
 		forvalues i = 1/`nobs' {
 			rename v`i' `lbl`i''
 		}
 
-		qui gen `tavar' = "`tafile'"
-		qui order `tavar', first
+		gen `tavar' = "`tafile'"
+		order `tavar', first
 		
-		qui save `audit`j''
+		save `audit`j'', replace
 	}
 
 	/* Now, I begin with the first audit file, and loop through all of them, appending them to the existing 
@@ -119,8 +132,9 @@ program define tamerge, rclass
 	be the number of seconds to answer that question in the survey. You could merge this back into your main
 	dataset; it will require merging 1:1 on your audit identifier variable, and renaming all of the variables
 	in your audit dataset. */
-
-	cap qui use `audit1', clear
+	nois di ""
+	nois di "Merging audit times with data in memory using the prefix `pre'_ ..."
+	cap use `audit1', clear
 	if _rc == 601 {
 		clear
 	}
@@ -128,26 +142,25 @@ program define tamerge, rclass
 	forvalues j = 2/`tacount' {
 		/* This cap again is for instances where the media file cannot be found (eg when SurveyCTO
 		Sync fails to download all of the files */
-		cap qui append using `audit`j'', force
+		cap append using `audit`j'', force
 	}
 
 	cap drop _var*
-	qui ds `tavar', not
+	ds `tavar', not
 	foreach var of varlist `r(varlist)' {
 		rename `var' `pre'`var'
 	}
 
-	qui save `audit_data'
+	save `audit_data', replace
 
 	use `nonmissing_data', clear
-	qui merge 1:1 `tavar' using `audit_data'
-	qui drop _merge
-	qui save `nonmissing_data'
+	merge 1:1 `tavar' using `audit_data'
+	drop _merge
+	save `nonmissing_data', replace
 	
 	use `full_data', clear
-	qui drop if "`tavar'" != ""
-	qui append using `nonmissing_data'
-	qui drop _merge
+	drop if "`tavar'" != ""
+	append using `nonmissing_data'
 
 	if "`filename'" != "" {
 		save "`filename'", replace
@@ -181,7 +194,7 @@ program define tamerge, rclass
 	di "*Note: P-value is from F-test of equal means across enumerators."
 	restore
 	}
-
+	}
 end
 
 // program to check that specified variable is a SurveyCTO text audit field
@@ -342,7 +355,7 @@ real vector intlevelsof(real vector A)
 1s are placed in indices corresponding to the values of A. Ie:
 b = (1,0,1,1,1)'. The levels are then returned with selectindex(b).
 - offset is used to support negative values in A and to more efficiently
-​store the b vector if the minimum value in A is much greater than 1.
+?store the b vector if the minimum value in A is much greater than 1.
 */
 
 real scalar maxA, minA, rangeA, offset
