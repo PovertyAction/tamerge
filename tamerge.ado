@@ -46,7 +46,7 @@ program define tamerge, rclass
 	save `full_data', replace
 
 	// transpose
-    drop if missing(`tavar')
+    drop if missing(`tavar') | `tavar' == "."
 	loc tacount = _N
 	save `nonmissing_data', replace
 	
@@ -87,6 +87,7 @@ program define tamerge, rclass
 		if _rc {
 			foreach var of varlist fieldname*{
 				g level = regexs(1) if regexm(`var', "\]([0-9]+)\[") & dups
+				replace level = reverse(level)
 				destring level, replace
 				egen maxgrp = max(level), by(shortname)
 				replace level = . if maxgrp < 2
